@@ -21,4 +21,37 @@ class Book extends Model
   {
     $query->where('title', 'LIKE', '%' . $title . '%');
   }
+
+  #[Scope]
+  protected function popular(Builder $query, $from = null, $to = null)
+  {
+    $query->withCount([
+      'reviews' => fn(Builder $q) => $this->dateRangeFilter($q, $from, $to)
+    ])->orderBy('reviews_count', 'desc');
+  }
+
+  #[Scope]
+  protected function highestRated(Builder $query, $from = null, $to = null)
+  {
+    $query->withAvg([
+      'reviews' => fn(Builder $q) => $this->dateRangeFilter($q, $from, $to)
+    ], 'rating')->orderBy('reviews_avg_rating', 'desc');
+  }
+
+  #[Scope]
+  protected function minReviews(Builder $query, int $minReviews)
+  {
+    $query->having('reviews_count', '>=', $minReviews);
+  }
+
+  private function dateRangeFilter(Builder $query, $from = null, $to = null)
+  {
+    if ($from && !$to) {
+      $query->where('created_at', '>=', $from);
+    } elseif (!$from && $to) {
+      $query->where('created_at', '<=', $to);
+    } elseif ($from && $to) {
+      $query->where('created_at', [$from, $to]);
+    }
+  }
 }
