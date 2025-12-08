@@ -17,7 +17,7 @@
     }
 
     .filter-container {
-      @apply mb-4 flex space-x-2 rounded-md bg-slate-100 p-2;
+      @apply mb-4 flex space-x-2 rounded-md bg-slate-200 p-2;
     }
 
     .filter-item {
@@ -65,9 +65,9 @@
 
 <body>
   <main class="container mx-auto mt-10 mb-10 max-w-3xl">
-@yield('content')
+    @yield('content')
   </main>
-  
+
 </body>
 
 </html>

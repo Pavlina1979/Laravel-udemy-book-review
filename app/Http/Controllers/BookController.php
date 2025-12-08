@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BookController extends Controller
 {
@@ -13,12 +14,27 @@ class BookController extends Controller
   public function index(Request $request)
   {
     $title = $request->input('title');
+    $filter = $request->query('filter', '');
 
     $books = Book::when(
       $title,
       fn($query, string $title) =>
       $query->title($title)
-    )->get();
+    );
+    $books = match ($filter) {
+      'popular_last_month' => $books->popularLastMonth(),
+      'popular_last_6months' => $books->popularLast6Months(),
+      'highest_rated_last_month' => $books->highestRatedLastMonth(),
+      'highest_rated_last_6months' => $books->highestRatedLast6Months(),
+      default => $books->latest()->withAvgRating()->withReviewsCount()
+    };
+    //$books = $books->get();
+
+    $cacheKey = 'books:' . $filter . ':' . $title;
+    $books = $books->paginate(15);
+
+    // pro zapnutí cachování:
+    //$books = Cache::remember($cacheKey, 3600, fn() => $books->paginate(15));
 
     return view('books.index', [
       'books' => $books
@@ -46,7 +62,28 @@ class BookController extends Controller
    */
   public function show(string $id)
   {
-    //
+    // $book = Book::findOrFail($id);
+    //$book = Book::load()->withAvgRating()->withReviewsCount()->findOrFail($id);
+
+    $book = Book::with([
+      'reviews' => fn($query) => $query->paginate(5)
+    ])->withAvgRating()->withReviewsCount()->findOrFail($id);
+
+    $cacheKey = 'book:' . $id;
+
+    // $book = cache()->remember(
+    //   $cacheKey,
+    //   3600,
+    //   fn() => Book::with([
+    //     'reviews' => fn($query) => $query->paginate(5)
+    //   ])->withAvgRating()->withReviewsCount()->findOrFail($id)
+    // );
+    $reviews = $book->reviews()->paginate(5);
+
+    return view('books.show', [
+      'book' => $book,
+      'reviews' => $reviews
+    ]);
   }
 
   /**
