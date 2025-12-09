@@ -18,6 +18,9 @@
     </div>
   </div>
 
+  <div class="my-7"><a href="{{ route('books.reviews.create', $book) }}" class="btn">Add review</a></div>
+
+
   <div>
     <h2 class="mb-4 text-xl font-semibold">Reviews</h2>
     <ul>

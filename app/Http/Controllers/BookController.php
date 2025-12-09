@@ -66,7 +66,7 @@ class BookController extends Controller
     //$book = Book::load()->withAvgRating()->withReviewsCount()->findOrFail($id);
 
     $book = Book::with([
-      'reviews' => fn($query) => $query->paginate(5)
+      'reviews' => fn($query) => $query->orderBy('created_at', 'DESC')->paginate(5)
     ])->withAvgRating()->withReviewsCount()->findOrFail($id);
 
     $cacheKey = 'book:' . $id;
